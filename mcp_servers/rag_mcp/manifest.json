@@ -1,0 +1,20 @@
+{
+  "name": "bureaucracy-rag-mcp",
+  "version": "1.0.0",
+  "description": "Knowledge search, glossary lookup, and similar case matching",
+  "transport": "stdio",
+  "module": "mcp_servers.rag_mcp.server",
+  "auth": {
+    "type": "bearer",
+    "env_var": "MCP_AUTH_TOKEN"
+  },
+  "tools": [
+    "search_knowledge",
+    "get_glossary_term",
+    "find_similar_cases"
+  ],
+  "resources": [
+    "knowledge://glossary/{term}",
+    "knowledge://authority/{name}/faq"
+  ]
+}

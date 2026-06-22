@@ -1,0 +1,20 @@
+{
+  "name": "bureaucracy-gov-resources-mcp",
+  "version": "1.0.0",
+  "description": "Government forms, authority contacts, and official links",
+  "transport": "stdio",
+  "module": "mcp_servers.gov_resources_mcp.server",
+  "auth": {
+    "type": "bearer",
+    "env_var": "MCP_AUTH_TOKEN"
+  },
+  "tools": [
+    "resolve_form",
+    "get_authority_contact",
+    "list_required_documents",
+    "get_official_links"
+  ],
+  "resources": [
+    "gov://forms/catalog"
+  ]
+}

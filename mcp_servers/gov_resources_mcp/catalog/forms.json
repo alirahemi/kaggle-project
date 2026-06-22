@@ -1,0 +1,36 @@
+{
+  "forms": [
+    {
+      "form_id": "Einspruch",
+      "authority": "finanzamt",
+      "action": "einspruch_einlegen",
+      "name": "Einspruch gegen einen Steuerbescheid",
+      "url": "https://www.elster.de/einspruch",
+      "notes": "Frist beachten — Rechtsbehelfsbelehrung im Bescheid prüfen."
+    },
+    {
+      "form_id": "Widerspruch",
+      "authority": "jobcenter",
+      "action": "widerspruch_einlegen",
+      "name": "Widerspruch gegen einen Bescheid des Jobcenters",
+      "url": "https://www.arbeitsagentur.de/widerspruch",
+      "notes": "Widerspruch innerhalb eines Monats nach Zustellung."
+    },
+    {
+      "form_id": "Familienversicherung",
+      "authority": "krankenkasse",
+      "action": "familienversicherung_beantragen",
+      "name": "Antrag auf Familienversicherung",
+      "url": "https://www.gkv-spitzenverband.de/familienversicherung",
+      "notes": "Einkommensgrenzen und Mitversichertenstatus prüfen."
+    },
+    {
+      "form_id": "Aufenthaltstitel-Verlaengerung",
+      "authority": "auslaenderbehoerde",
+      "action": "aufenthaltstitel_verlaengern",
+      "name": "Antrag auf Verlängerung des Aufenthaltstitels",
+      "url": "https://www.service.berlin.de/dienstleistung/aufenthaltstitel/",
+      "notes": "Termin frühzeitig vereinbaren; Pass und Meldebescheinigung mitbringen."
+    }
+  ]
+}

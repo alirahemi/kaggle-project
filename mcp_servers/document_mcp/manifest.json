@@ -1,0 +1,21 @@
+{
+  "name": "bureaucracy-document-mcp",
+  "version": "1.0.0",
+  "description": "Document parsing, OCR, PII redaction, storage",
+  "transport": "stdio",
+  "module": "mcp_servers.document_mcp.server",
+  "auth": {
+    "type": "bearer",
+    "env_var": "MCP_AUTH_TOKEN"
+  },
+  "tools": [
+    "parse_document",
+    "ocr_document",
+    "redact_pii",
+    "store_document",
+    "get_document_text"
+  ],
+  "resources": [
+    "document://{doc_id}/metadata"
+  ]
+}

@@ -1,0 +1,52 @@
+# MCP server registry — see docs/mcp/MCP_SERVER_SPECIFICATION.md
+
+servers:
+  document_mcp:
+    name: bureaucracy-document-mcp
+    version: "1.0.0"
+    transport: stdio
+    command: python
+    args: ["-m", "mcp_servers.document_mcp.server"]
+    auth:
+      type: bearer
+      env_var: MCP_AUTH_TOKEN
+
+  rag_mcp:
+    name: bureaucracy-rag-mcp
+    version: "1.0.0"
+    transport: stdio
+    command: python
+    args: ["-m", "mcp_servers.rag_mcp.server"]
+    auth:
+      type: bearer
+      env_var: MCP_AUTH_TOKEN
+
+  gov_resources_mcp:
+    name: bureaucracy-gov-resources-mcp
+    version: "1.0.0"
+    transport: stdio
+    command: python
+    args: ["-m", "mcp_servers.gov_resources_mcp.server"]
+    auth:
+      type: bearer
+      env_var: MCP_AUTH_TOKEN
+
+  calendar_mcp:
+    name: bureaucracy-calendar-mcp
+    version: "1.0.0"
+    transport: stdio
+    command: python
+    args: ["-m", "mcp_servers.calendar_mcp.server"]
+    auth:
+      type: bearer
+      env_var: MCP_AUTH_TOKEN
+
+  audit_mcp:
+    name: bureaucracy-audit-mcp
+    version: "1.0.0"
+    transport: stdio
+    command: python
+    args: ["-m", "mcp_servers.audit_mcp.server"]
+    auth:
+      type: bearer
+      env_var: MCP_AUTH_TOKEN

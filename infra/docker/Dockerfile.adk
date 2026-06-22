@@ -1,0 +1,19 @@
+# Google ADK agent runtime image
+FROM python:3.12-slim
+
+WORKDIR /app
+
+COPY requirements.txt pyproject.toml ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY config ./config
+COPY agents ./agents
+COPY mcp_servers ./mcp_servers
+COPY knowledge ./knowledge
+COPY db ./db
+
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+
+# Agent entrypoint to be wired when orchestrator module is added
+CMD ["python", "-c", "print('ADK agent runtime ready — wire agents.orchestrator here')"]

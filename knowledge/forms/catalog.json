@@ -1,0 +1,37 @@
+{
+  "version": "1.0.0",
+  "forms": [
+    {
+      "id": "jobcenter-nachreichung",
+      "title": "Nachreichung von Unterlagen (Jobcenter)",
+      "authority": "jobcenter",
+      "url": "https://www.arbeitsagentur.de/unternehmen/downloads/unternehmen/downloads-node",
+      "language": "de",
+      "description": "Cover sheet for submitting missing documents to the Jobcenter."
+    },
+    {
+      "id": "finanzamt-einspruch",
+      "title": "Einspruch gegen einen Steuerbescheid",
+      "authority": "finanzamt",
+      "url": "https://www.elster.de",
+      "language": "de",
+      "description": "Objection to a tax assessment — can be informal letter within one month."
+    },
+    {
+      "id": "auslaender-fristverlaengerung",
+      "title": "Antrag auf Verlängerung der Aufenthaltserlaubnis",
+      "authority": "auslaenderbehoerde",
+      "url": "https://www.service-berlin.de",
+      "language": "de",
+      "description": "Application to extend a residence permit before expiry."
+    },
+    {
+      "id": "krankenkasse-mitgliedsbescheinigung",
+      "title": "Antrag auf Mitgliedsbescheinigung",
+      "authority": "krankenkasse",
+      "url": "https://www.gkv-spitzenverband.de",
+      "language": "de",
+      "description": "Proof of health insurance membership for authorities or employers."
+    }
+  ]
+}

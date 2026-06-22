@@ -1,0 +1,18 @@
+{
+  "name": "bureaucracy-audit-mcp",
+  "version": "1.0.0",
+  "description": "Interaction audit logging and GDPR data export/deletion",
+  "transport": "stdio",
+  "module": "mcp_servers.audit_mcp.server",
+  "auth": {
+    "type": "bearer",
+    "env_var": "MCP_AUTH_TOKEN"
+  },
+  "tools": [
+    "log_interaction",
+    "get_session_summary",
+    "export_user_data",
+    "delete_user_data"
+  ],
+  "resources": []
+}

@@ -1,0 +1,13 @@
+# Copy to terraform.tfvars and fill in values — never commit secrets.
+
+project_id    = "my-gcp-project"
+region        = "europe-west1"
+environment   = "staging"
+app_name      = "bureaucracy-agent"
+image_tag     = "0.1.0"
+
+db_password   = "CHANGE_ME_STRONG_PASSWORD"
+jwt_secret_key = "CHANGE_ME_JWT_SECRET"
+
+# vpc_network_id = "projects/my-gcp-project/global/networks/default"
+allow_unauthenticated = false

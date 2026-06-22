@@ -1,0 +1,82 @@
+{
+  "analysis_id": "00000000-0000-4000-8000-000000000001",
+  "status": "completed",
+  "authority": "jobcenter",
+  "letter_type": "nachforderung",
+  "confidence": 0.87,
+  "confidence_level": "high",
+  "extraction": {
+    "deadlines": [
+      {
+        "date": "2025-07-15",
+        "description": "Submit Meldebescheinigung, bank statements, and lease documents",
+        "consequence_hint": "Benefits may be suspended under § 60 SGB I"
+      }
+    ],
+    "actions_required": [
+      {
+        "verb": "submit",
+        "object": "Meldebescheinigung",
+        "mandatory": true
+      },
+      {
+        "verb": "submit",
+        "object": "Kontoauszüge (3 months)",
+        "mandatory": true
+      },
+      {
+        "verb": "submit",
+        "object": "Mietvertrag and Warmmiete proof",
+        "mandatory": true
+      }
+    ],
+    "references": [
+      {
+        "law": "SGB I",
+        "section": "§ 60"
+      }
+    ],
+    "amounts": [],
+    "case_number": "JC-2025-001234",
+    "confidence": 0.87
+  },
+  "explanation": {
+    "summary": "The Jobcenter requests additional documents by 15 July 2025 to continue processing your Bürgergeld application.",
+    "key_points": [
+      "Three document types are required.",
+      "Missing the deadline may pause your benefits.",
+      "Reference case number JC-2025-001234 in all correspondence."
+    ],
+    "glossary_terms": [
+      {
+        "term": "Nachforderung",
+        "definition": "A formal request for documents that were not included in the original application."
+      },
+      {
+        "term": "Meldebescheinigung",
+        "definition": "Registration certificate from your local Bürgeramt confirming your address."
+      }
+    ],
+    "locale": "en"
+  },
+  "action_plan": {
+    "urgent": [
+      {
+        "action": "Gather Meldebescheinigung from Bürgeramt",
+        "deadline": "2025-07-15",
+        "form_url": null
+      }
+    ],
+    "this_week": [
+      {
+        "action": "Print and submit bank statements for the last three months",
+        "deadline": "2025-07-15",
+        "form_url": null
+      }
+    ],
+    "later": [],
+    "optional": []
+  },
+  "disclaimer": "AI-generated summary — not legal advice. Verify against the original letter.",
+  "requires_review": false
+}

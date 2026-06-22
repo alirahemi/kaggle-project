@@ -1,0 +1,42 @@
+{
+  "version": "1.0.0",
+  "locale": "de",
+  "terms": [
+    {
+      "term": "Bescheid",
+      "definition_en": "Official administrative decision issued by a German authority.",
+      "definition_de": "Behördliche Entscheidung in Schriftform.",
+      "authorities": ["jobcenter", "finanzamt", "auslaenderbehoerde", "krankenkasse"]
+    },
+    {
+      "term": "Nachforderung",
+      "definition_en": "Request for additional documents needed to process your case.",
+      "definition_de": "Aufforderung, fehlende Unterlagen nachzureichen.",
+      "authorities": ["jobcenter", "finanzamt"]
+    },
+    {
+      "term": "Frist",
+      "definition_en": "Legal deadline by which you must act or respond.",
+      "definition_de": "Gesetzliche oder behördlich gesetzte Bearbeitungsfrist.",
+      "authorities": ["jobcenter", "finanzamt", "auslaenderbehoerde", "krankenkasse"]
+    },
+    {
+      "term": "Widerspruch",
+      "definition_en": "Formal objection filed against an administrative decision.",
+      "definition_de": "Rechtsmittel gegen einen Bescheid innerhalb der Einspruchsfrist.",
+      "authorities": ["finanzamt", "jobcenter", "krankenkasse"]
+    },
+    {
+      "term": "Meldebescheinigung",
+      "definition_en": "Registration certificate confirming your residential address.",
+      "definition_de": "Nachweis der Anmeldung beim Einwohnermeldeamt.",
+      "authorities": ["jobcenter", "auslaenderbehoerde"]
+    },
+    {
+      "term": "Bürgergeld",
+      "definition_en": "Basic income support for people in need (successor to Hartz IV).",
+      "definition_de": "Leistung zur Sicherung des Lebensunterhalts nach SGB II.",
+      "authorities": ["jobcenter"]
+    }
+  ]
+}

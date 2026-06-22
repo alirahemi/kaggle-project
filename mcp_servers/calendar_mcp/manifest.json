@@ -1,0 +1,17 @@
+{
+  "name": "bureaucracy-calendar-mcp",
+  "version": "1.0.0",
+  "description": "German date parsing, business-day calculation, and urgency scoring",
+  "transport": "stdio",
+  "module": "mcp_servers.calendar_mcp.server",
+  "auth": {
+    "type": "bearer",
+    "env_var": "MCP_AUTH_TOKEN"
+  },
+  "tools": [
+    "parse_german_date",
+    "business_days_until",
+    "urgency_score"
+  ],
+  "resources": []
+}

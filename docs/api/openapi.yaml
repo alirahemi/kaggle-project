@@ -1,0 +1,679 @@
+openapi: 3.1.0
+info:
+  title: German Bureaucracy AI Agent API
+  description: REST + SSE API for multi-agent letter analysis
+  version: 0.1.0
+  contact:
+    name: Kaggle Capstone Team
+
+servers:
+  - url: http://localhost:8000
+    description: Local development
+  - url: https://api.example.com
+    description: Production
+
+tags:
+  - name: health
+  - name: auth
+  - name: sessions
+  - name: documents
+  - name: analysis
+  - name: chat
+  - name: users
+
+paths:
+  /health:
+    get:
+      tags: [health]
+      summary: Health check
+      operationId: healthCheck
+      responses:
+        "200":
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /api/v1/auth/token:
+    post:
+      tags: [auth]
+      summary: Obtain JWT access token (demo)
+      operationId: createToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenRequest"
+      responses:
+        "200":
+          description: Token issued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+
+  /api/v1/sessions:
+    post:
+      tags: [sessions]
+      summary: Create analysis session
+      operationId: createSession
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSessionRequest"
+      responses:
+        "201":
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionResponse"
+
+  /api/v1/sessions/{session_id}:
+    get:
+      tags: [sessions]
+      summary: Get session
+      operationId: getSession
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      responses:
+        "200":
+          description: Session details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionResponse"
+    delete:
+      tags: [sessions]
+      summary: End session
+      operationId: deleteSession
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      responses:
+        "204":
+          description: Session ended
+
+  /api/v1/documents:
+    post:
+      tags: [documents]
+      summary: Upload official letter
+      operationId: uploadDocument
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, session_id]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                session_id:
+                  type: string
+                  format: uuid
+      responses:
+        "201":
+          description: Document uploaded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentResponse"
+
+  /api/v1/documents/{document_id}:
+    get:
+      tags: [documents]
+      summary: Get document metadata
+      operationId: getDocument
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/DocumentId"
+      responses:
+        "200":
+          description: Document metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentMetadata"
+
+  /api/v1/analysis:
+    post:
+      tags: [analysis]
+      summary: Start letter analysis
+      operationId: startAnalysis
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartAnalysisRequest"
+      responses:
+        "202":
+          description: Analysis started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalysisStatusResponse"
+
+  /api/v1/analysis/{analysis_id}:
+    get:
+      tags: [analysis]
+      summary: Get analysis result
+      operationId: getAnalysis
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/AnalysisId"
+      responses:
+        "200":
+          description: Analysis result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalysisResult"
+
+  /api/v1/analysis/{analysis_id}/stream:
+    get:
+      tags: [analysis]
+      summary: SSE stream for explanation
+      operationId: streamAnalysis
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/AnalysisId"
+      responses:
+        "200":
+          description: Server-sent events stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  /api/v1/analysis/{analysis_id}/confirm:
+    post:
+      tags: [analysis]
+      summary: Confirm authority classification
+      operationId: confirmAnalysis
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/AnalysisId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfirmAnalysisRequest"
+      responses:
+        "200":
+          description: Analysis resumed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalysisStatusResponse"
+
+  /api/v1/chat:
+    post:
+      tags: [chat]
+      summary: Concierge follow-up chat
+      operationId: chat
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatRequest"
+      responses:
+        "200":
+          description: Chat response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatResponse"
+
+  /api/v1/users/me/data:
+    get:
+      tags: [users]
+      summary: Export user data (GDPR)
+      operationId: exportUserData
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Export ready
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataExportResponse"
+    delete:
+      tags: [users]
+      summary: Delete user data (GDPR)
+      operationId: deleteUserData
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeleteDataRequest"
+      responses:
+        "200":
+          description: Data deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteDataResponse"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    SessionId:
+      name: session_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    DocumentId:
+      name: document_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    AnalysisId:
+      name: analysis_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: healthy
+        version:
+          type: string
+        services:
+          type: object
+          additionalProperties:
+            type: string
+
+    TokenRequest:
+      type: object
+      required: [user_id]
+      properties:
+        user_id:
+          type: string
+        locale:
+          type: string
+          default: en
+
+    TokenResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+          example: bearer
+        expires_in:
+          type: integer
+
+    CreateSessionRequest:
+      type: object
+      properties:
+        locale:
+          type: string
+          default: en
+        bundesland:
+          type: string
+          default: BE
+
+    SessionResponse:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        locale:
+          type: string
+        bundesland:
+          type: string
+        status:
+          type: string
+        document_id:
+          type: string
+          format: uuid
+          nullable: true
+        analysis_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    DocumentResponse:
+      type: object
+      properties:
+        document_id:
+          type: string
+          format: uuid
+        session_id:
+          type: string
+          format: uuid
+        filename:
+          type: string
+        content_type:
+          type: string
+        page_count:
+          type: integer
+        redacted_preview:
+          type: string
+        pii_redacted:
+          type: boolean
+        retention_expires_at:
+          type: string
+          format: date-time
+
+    DocumentMetadata:
+      type: object
+      properties:
+        document_id:
+          type: string
+          format: uuid
+        filename:
+          type: string
+        page_count:
+          type: integer
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    StartAnalysisRequest:
+      type: object
+      required: [session_id, document_id]
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        document_id:
+          type: string
+          format: uuid
+        locale:
+          type: string
+        confirm_authority:
+          $ref: "#/components/schemas/AuthorityEnum"
+
+    ConfirmAnalysisRequest:
+      type: object
+      required: [authority]
+      properties:
+        authority:
+          $ref: "#/components/schemas/AuthorityEnum"
+        letter_type:
+          $ref: "#/components/schemas/LetterTypeEnum"
+
+    AnalysisStatusResponse:
+      type: object
+      properties:
+        analysis_id:
+          type: string
+          format: uuid
+        session_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [processing, completed, failed, requires_confirmation]
+        pipeline_stage:
+          type: string
+
+    AnalysisResult:
+      type: object
+      properties:
+        analysis_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        authority:
+          $ref: "#/components/schemas/AuthorityEnum"
+        letter_type:
+          $ref: "#/components/schemas/LetterTypeEnum"
+        confidence:
+          type: number
+        confidence_level:
+          type: string
+          enum: [high, medium, review_recommended]
+        extraction:
+          $ref: "#/components/schemas/LetterExtraction"
+        explanation:
+          $ref: "#/components/schemas/Explanation"
+        action_plan:
+          $ref: "#/components/schemas/ActionPlan"
+        disclaimer:
+          type: string
+        requires_review:
+          type: boolean
+        completed_at:
+          type: string
+          format: date-time
+
+    AuthorityEnum:
+      type: string
+      enum: [jobcenter, auslaenderbehoerde, finanzamt, krankenkasse, other]
+
+    LetterTypeEnum:
+      type: string
+      enum:
+        - bewilligungsbescheid
+        - ablehnungsbescheid
+        - nachforderung
+        - fristsetzung
+        - termin
+        - mahnung
+        - bescheid
+        - other
+
+    LetterExtraction:
+      type: object
+      properties:
+        deadlines:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              description:
+                type: string
+              consequence_hint:
+                type: string
+        actions_required:
+          type: array
+          items:
+            type: object
+            properties:
+              verb:
+                type: string
+              object:
+                type: string
+              mandatory:
+                type: boolean
+        references:
+          type: array
+          items:
+            type: object
+            properties:
+              law:
+                type: string
+              section:
+                type: string
+        amounts:
+          type: array
+          items:
+            type: object
+            properties:
+              value:
+                type: number
+              currency:
+                type: string
+              context:
+                type: string
+        case_number:
+          type: string
+        confidence:
+          type: number
+
+    Explanation:
+      type: object
+      properties:
+        summary:
+          type: string
+        key_points:
+          type: array
+          items:
+            type: string
+        glossary_terms:
+          type: array
+          items:
+            type: object
+            properties:
+              term:
+                type: string
+              definition:
+                type: string
+        locale:
+          type: string
+
+    ActionPlan:
+      type: object
+      properties:
+        urgent:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActionItem"
+        this_week:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActionItem"
+        later:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActionItem"
+        optional:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActionItem"
+
+    ActionItem:
+      type: object
+      properties:
+        action:
+          type: string
+        deadline:
+          type: string
+          format: date
+          nullable: true
+        form_url:
+          type: string
+          nullable: true
+
+    ChatRequest:
+      type: object
+      required: [session_id, message]
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        message:
+          type: string
+
+    ChatResponse:
+      type: object
+      properties:
+        message_id:
+          type: string
+          format: uuid
+        response:
+          type: string
+        sources:
+          type: array
+          items:
+            type: string
+        disclaimer:
+          type: string
+
+    DataExportResponse:
+      type: object
+      properties:
+        export_id:
+          type: string
+          format: uuid
+        download_url:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+
+    DeleteDataRequest:
+      type: object
+      required: [confirm]
+      properties:
+        confirm:
+          type: boolean
+
+    DeleteDataResponse:
+      type: object
+      properties:
+        deleted:
+          type: boolean
+        documents_removed:
+          type: integer
+        sessions_removed:
+          type: integer
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object

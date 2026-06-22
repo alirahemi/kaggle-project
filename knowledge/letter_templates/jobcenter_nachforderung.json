@@ -1,0 +1,47 @@
+{
+  "template_id": "jobcenter_nachforderung",
+  "authority": "jobcenter",
+  "letter_type": "nachforderung",
+  "title": "Nachforderung von Unterlagen",
+  "language": "de",
+  "required_fields": [
+    "recipient_name",
+    "recipient_address",
+    "case_number",
+    "issue_date",
+    "deadline_date",
+    "requested_documents"
+  ],
+  "sections": [
+    {
+      "id": "header",
+      "pattern": "Jobcenter|Agentur für Arbeit",
+      "weight": 0.9
+    },
+    {
+      "id": "nachforderung_title",
+      "pattern": "Nachforderung",
+      "weight": 0.95
+    },
+    {
+      "id": "deadline",
+      "pattern": "bis zum \\d{2}\\.\\d{2}\\.\\d{4}",
+      "weight": 0.85
+    },
+    {
+      "id": "consequence",
+      "pattern": "§ 60 SGB",
+      "weight": 0.8
+    }
+  ],
+  "typical_documents": [
+    "Meldebescheinigung",
+    "Kontoauszüge",
+    "Mietvertrag",
+    "Gehaltsabrechnungen"
+  ],
+  "extraction_hints": {
+    "deadline_keywords": ["bis zum", "Frist", "spätestens"],
+    "case_number_keywords": ["Aktenzeichen", "Kundennummer", "BG-Nummer"]
+  }
+}

@@ -1,0 +1,108 @@
+# Google ADK multi-agent configuration
+# See docs/agents/AGENT_SPECIFICATIONS.md for full specification
+
+orchestrator:
+  name: bureaucracy_orchestrator
+  model: gemini-2.5-flash
+  description: Routes user requests through the letter analysis pipeline
+  sub_agents:
+    - intake
+    - classifier
+    - extraction
+    - domain_specialists
+    - explainer
+    - action_planner
+    - safety
+
+models:
+  flash: ${GEMINI_MODEL_FLASH:-gemini-2.5-flash}
+  pro: ${GEMINI_MODEL_PRO:-gemini-2.5-pro}
+
+agents:
+  intake:
+    model: flash
+    tools:
+      - document_mcp.parse_document
+      - document_mcp.ocr_document
+      - document_mcp.redact_pii
+      - document_mcp.store_document
+
+  classifier:
+    model: flash
+    tools:
+      - rag_mcp.search_knowledge
+      - rag_mcp.find_similar_cases
+
+  extraction:
+    model: pro
+    response_schema: schemas/letter_extraction.json
+    tools:
+      - calendar_mcp.parse_german_date
+
+  jobcenter_specialist:
+    model: pro
+    authority: jobcenter
+    tools:
+      - rag_mcp.get_glossary_term
+      - gov_resources_mcp.list_required_documents
+
+  auslaenderbehoerde_specialist:
+    model: pro
+    authority: auslaenderbehoerde
+    tools:
+      - rag_mcp.get_glossary_term
+      - gov_resources_mcp.get_authority_contact
+
+  finanzamt_specialist:
+    model: pro
+    authority: finanzamt
+    tools:
+      - rag_mcp.get_glossary_term
+      - gov_resources_mcp.resolve_form
+
+  krankenkasse_specialist:
+    model: pro
+    authority: krankenkasse
+    tools:
+      - rag_mcp.get_glossary_term
+      - gov_resources_mcp.list_required_documents
+
+  generic_gov_specialist:
+    model: pro
+    authority: other
+    tools:
+      - rag_mcp.search_knowledge
+
+  explainer:
+    model: pro
+    tools:
+      - rag_mcp.get_glossary_term
+
+  action_planner:
+    model: pro
+    tools:
+      - calendar_mcp.business_days_until
+      - calendar_mcp.urgency_score
+      - gov_resources_mcp.resolve_form
+      - gov_resources_mcp.get_official_links
+
+  safety:
+    model: flash
+    tools:
+      - audit_mcp.log_interaction
+
+callbacks:
+  - pii_guard
+  - schema_validator
+  - disclaimer_injector
+
+session:
+  max_turns: 50
+  state_keys:
+    - document_id
+    - authority
+    - letter_type
+    - extraction
+    - confidence
+    - locale
+    - bundesland

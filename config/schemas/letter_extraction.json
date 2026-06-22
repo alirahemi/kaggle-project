@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LetterExtraction",
+  "type": "object",
+  "required": ["deadlines", "actions_required", "references", "confidence"],
+  "properties": {
+    "deadlines": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["date", "description"],
+        "properties": {
+          "date": { "type": "string", "format": "date" },
+          "description": { "type": "string" },
+          "consequence_hint": { "type": "string" }
+        }
+      }
+    },
+    "actions_required": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["verb", "object", "mandatory"],
+        "properties": {
+          "verb": { "type": "string" },
+          "object": { "type": "string" },
+          "mandatory": { "type": "boolean" }
+        }
+      }
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "law": { "type": "string" },
+          "section": { "type": "string" }
+        }
+      }
+    },
+    "amounts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "value": { "type": "number" },
+          "currency": { "type": "string", "default": "EUR" },
+          "context": { "type": "string" }
+        }
+      }
+    },
+    "case_number": { "type": "string" },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+  }
+}
