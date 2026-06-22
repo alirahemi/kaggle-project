@@ -15,7 +15,6 @@ from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
 
-from agents.demo_fallback import build_demo_analysis
 from agents.errors import (
     EmptyInputError,
     GeminiApiError,
@@ -50,7 +49,7 @@ def _ensure_api_key(settings: Settings) -> None:
     key = settings.google_api_key or os.environ.get("GOOGLE_API_KEY", "")
     if not key or key.startswith("your-"):
         raise MissingApiKeyError(
-            "GOOGLE_API_KEY is not set. Copy .env.example to .env and add your key "
+            "GOOGLE_API_KEY is not set. Create a `.env` file with your key "
             "from https://aistudio.google.com/apikey"
         )
     os.environ["GOOGLE_API_KEY"] = key
@@ -278,7 +277,7 @@ async def _run_pipeline_async(letter_text: str, settings: Settings) -> dict[str,
         if _is_quota_error(exc):
             raise QuotaExceededError(
                 "Gemini free-tier quota exceeded (429 RESOURCE_EXHAUSTED). "
-                "Wait a minute and try again, or enable DEMO_MODE=true for recording."
+                "Wait a minute and try again."
             ) from exc
         if _is_gemini_error(exc):
             raise GeminiApiError(
@@ -342,17 +341,4 @@ def analyze_letter(letter_text: str, settings: Settings | None = None) -> dict[s
     if not letter_text or not letter_text.strip():
         raise EmptyInputError("Please paste or upload a letter before analyzing.")
     cfg = settings or get_settings()
-
-    if cfg.demo_mode:
-        return build_demo_analysis(letter_text, reason="demo_mode")
-
-    try:
-        return _run_coro_sync(_run_pipeline_async(letter_text, cfg))
-    except QuotaExceededError:
-        if cfg.demo_fallback_on_quota:
-            return build_demo_analysis(letter_text, reason="quota_exceeded")
-        raise
-    except GeminiApiError as exc:
-        if cfg.demo_fallback_on_quota and _is_quota_error(exc):
-            return build_demo_analysis(letter_text, reason="quota_exceeded")
-        raise
+    return _run_coro_sync(_run_pipeline_async(letter_text, cfg))

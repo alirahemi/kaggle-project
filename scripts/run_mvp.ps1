@@ -7,7 +7,10 @@ if (-not (Test-Path .venv\Scripts\python.exe)) {
 }
 
 if (-not (Test-Path .env)) {
-    Copy-Item .env.example .env
+    @"
+# Required: https://aistudio.google.com/apikey
+GOOGLE_API_KEY=your-google-api-key-here
+"@ | Set-Content -Path .env -Encoding utf8
     Write-Host "Created .env — add your GOOGLE_API_KEY before analyzing."
 }
 

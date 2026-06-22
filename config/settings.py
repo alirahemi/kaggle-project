@@ -1,17 +1,27 @@
 """Application settings loaded from environment variables."""
 
 from functools import lru_cache
+from pathlib import Path
 
 from dotenv import load_dotenv
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-load_dotenv()
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+ENV_FILE = PROJECT_ROOT / ".env"
+
+
+def _load_env_file() -> None:
+    if ENV_FILE.is_file():
+        load_dotenv(ENV_FILE, override=True)
+
+
+_load_env_file()
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=str(ENV_FILE) if ENV_FILE.is_file() else None,
         env_file_encoding="utf-8",
         extra="ignore",
     )
@@ -51,8 +61,6 @@ class Settings(BaseSettings):
     max_pdf_pages: int = 20
     document_retention_days: int = 30
     pii_redaction_enabled: bool = True
-    demo_mode: bool = False
-    demo_fallback_on_quota: bool = True
 
     agent_default_locale: str = "en"
     agent_default_bundesland: str = "BE"
@@ -65,3 +73,10 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+def reload_settings() -> Settings:
+    """Reload .env from disk and return fresh settings (for Streamlit reruns)."""
+    _load_env_file()
+    get_settings.cache_clear()
+    return get_settings()

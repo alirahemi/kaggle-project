@@ -19,7 +19,7 @@ from agents.errors import (
 )
 from agents.pipeline import analyze_letter
 from agents.security import get_disclaimer
-from config.settings import get_settings
+from config.settings import reload_settings
 
 SAMPLE_LETTER_PATH = (
     Path(__file__).resolve().parents[2]
@@ -43,10 +43,8 @@ st.set_page_config(
     layout="wide",
 )
 
-settings = get_settings()
 
-
-def _api_key_configured() -> bool:
+def _api_key_configured(settings) -> bool:
     key = settings.google_api_key or os.environ.get("GOOGLE_API_KEY", "")
     return bool(key) and not key.startswith("your-")
 
@@ -74,18 +72,12 @@ def _format_confidence(conf: float | None) -> str:
 def _show_error(exc: Exception) -> None:
     if isinstance(exc, MissingApiKeyError):
         st.error(str(exc))
-        st.info("Copy `.env.example` to `.env` and set `GOOGLE_API_KEY`.")
+        st.info("Create a `.env` file in the project root and set `GOOGLE_API_KEY`.")
     elif isinstance(exc, EmptyInputError):
         st.warning(str(exc))
     elif isinstance(exc, QuotaExceededError):
-        st.error(
-            "Gemini free-tier quota exceeded (429 RESOURCE_EXHAUSTED). "
-            "The API allows only a few requests per minute."
-        )
-        st.info(
-            "Wait about a minute and try again, or set `DEMO_MODE=true` in `.env` "
-            "for a reliable Kaggle recording without live API calls."
-        )
+        st.error(str(exc))
+        st.info("Wait about a minute and try again.")
     elif isinstance(exc, GeminiApiError):
         st.error(str(exc))
         st.info("Check your key at https://aistudio.google.com/apikey")
@@ -137,16 +129,6 @@ def _render_checklist(items: list) -> None:
 
 
 def _render_results(result: dict) -> None:
-    if result.get("demo_mode"):
-        st.info(
-            "Demo mode (`DEMO_MODE=true`): static sample output — Gemini/ADK pipeline was not called."
-        )
-    elif result.get("quota_fallback"):
-        st.warning(
-            "Live Gemini analysis failed due to free-tier quota limits. "
-            "Showing the pre-recorded Jobcenter sample output instead."
-        )
-
     institution = result.get("institution", "Other")
     icon = INSTITUTION_ICONS.get(institution, "📄")
 
@@ -214,19 +196,12 @@ def _render_results(result: dict) -> None:
         st.info("No reply draft was generated.")
 
     with st.expander("Technical details (for judges)"):
-        if result.get("demo_mode") or result.get("quota_fallback"):
-            st.markdown(
-                "- **Demo mode uses a static fallback** because free-tier Gemini quota is limited.\n"
-                "- The live ADK + Gemini + MCP pipeline remains in `agents/pipeline.py` "
-                "and runs when `DEMO_MODE=false` and quota is available."
-            )
-        else:
-            st.markdown(
-                "- **Orchestrator:** Google ADK `SequentialAgent`\n"
-                "- **Agents:** classifier → extraction → response_writer\n"
-                "- **Models:** Gemini 2.5 Flash + Pro\n"
-                "- **MCP tools:** `glossary_lookup`, `deadline_calculator`"
-            )
+        st.markdown(
+            "- **Orchestrator:** Google ADK `SequentialAgent`\n"
+            "- **Agents:** classifier → extraction → response_writer\n"
+            "- **Models:** Gemini 2.5 Flash + Pro\n"
+            "- **MCP tools:** `glossary_lookup`, `deadline_calculator`"
+        )
         if extraction:
             st.json(extraction)
 
@@ -238,32 +213,28 @@ def _render_results(result: dict) -> None:
 
 
 def main() -> None:
+    settings = reload_settings()
+
     st.title("German Bureaucracy AI Agent")
     st.caption(
         "Understand official letters from Jobcenter, Finanzamt, Ausländerbehörde, and Krankenkasse"
     )
 
     with st.sidebar:
-        st.header("Quick demo")
         if st.button("Load sample Jobcenter letter", use_container_width=True):
             if SAMPLE_LETTER_PATH.exists():
                 st.session_state.letter_input = SAMPLE_LETTER_PATH.read_text(encoding="utf-8")
                 st.session_state.result = None
+                st.session_state.last_analysis_error = None
                 st.success("Sample letter loaded.")
             else:
                 st.error("Sample letter file not found.")
 
         st.divider()
-        st.header("Configuration")
-        if settings.demo_mode:
-            st.warning("DEMO_MODE=true — static sample output, no Gemini calls")
-        elif _api_key_configured():
+        if _api_key_configured(settings):
             st.success("API key configured")
         else:
             st.error("Set GOOGLE_API_KEY in `.env`")
-
-        if settings.demo_fallback_on_quota and not settings.demo_mode:
-            st.caption("Quota fallback enabled (`DEMO_FALLBACK_ON_QUOTA=true`)")
 
         st.markdown(
             "**Agent pipeline**\n"
@@ -274,6 +245,9 @@ def main() -> None:
             "`glossary_lookup` · `deadline_calculator`"
         )
 
+    if "letter_input" not in st.session_state:
+        st.session_state.letter_input = ""
+
     tab_paste, tab_upload = st.tabs(["Paste text", "Upload PDF"])
 
     pasted_text = ""
@@ -282,7 +256,6 @@ def main() -> None:
     with tab_paste:
         pasted_text = st.text_area(
             "German official letter",
-            value=st.session_state.get("letter_input", ""),
             height=300,
             key="letter_input",
             placeholder="Paste a letter from Jobcenter, Finanzamt, Ausländerbehörde, or Krankenkasse…",
@@ -300,35 +273,39 @@ def main() -> None:
     letter_text = uploaded_text.strip() if uploaded_text.strip() else pasted_text.strip()
 
     if st.button("Analyze letter", type="primary", use_container_width=True):
-        if not settings.demo_mode and not _api_key_configured():
-            _show_error(
-                MissingApiKeyError(
-                    "GOOGLE_API_KEY is not set. Copy .env.example to .env and add your key."
-                )
+        if not _api_key_configured(settings):
+            st.session_state.result = None
+            st.session_state.last_analysis_error = MissingApiKeyError(
+                "GOOGLE_API_KEY is not set. Create a `.env` file and add your key."
             )
             return
         if not letter_text:
-            _show_error(EmptyInputError("Paste or upload a letter first."))
+            st.session_state.result = None
+            st.session_state.last_analysis_error = EmptyInputError(
+                "Paste or upload a letter first."
+            )
             return
 
-        spinner_msg = (
-            "Loading demo analysis…"
-            if settings.demo_mode
-            else "Analyzing… (classify → extract → respond)"
-        )
-        with st.spinner(spinner_msg):
+        with st.spinner("Analyzing… (classify → extract → respond)"):
             try:
-                st.session_state.result = analyze_letter(letter_text)
+                st.session_state.last_analysis_error = None
+                st.session_state.result = analyze_letter(letter_text, settings=settings)
             except BureaucracyAgentError as exc:
-                _show_error(exc)
+                st.session_state.result = None
+                st.session_state.last_analysis_error = exc
             except Exception as exc:
-                _show_error(exc)
+                st.session_state.result = None
+                st.session_state.last_analysis_error = exc
+
+    last_error = st.session_state.get("last_analysis_error")
+    if last_error and not st.session_state.get("result"):
+        _show_error(last_error)
 
     result = st.session_state.get("result")
     if result:
         _render_results(result)
     else:
-        st.info("Load the sample letter or paste your own, then click **Analyze letter**.")
+        st.info("Paste a letter or load the sample, then click **Analyze letter**.")
 
 
 if __name__ == "__main__":

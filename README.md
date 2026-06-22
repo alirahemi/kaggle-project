@@ -49,20 +49,6 @@ flowchart TB
 
 ---
 
-## Demo mode (Kaggle recording)
-
-Gemini free tier allows only a few requests per minute. For reliable screen recording:
-
-```env
-DEMO_MODE=true
-```
-
-This skips live Gemini/ADK calls and returns a static analysis of the sample Jobcenter letter. The real pipeline in `agents/pipeline.py` is unchanged — set `DEMO_MODE=false` to use it.
-
-If a live run hits **429 RESOURCE_EXHAUSTED**, the app shows a friendly quota message and (by default) the same static fallback when `DEMO_FALLBACK_ON_QUOTA=true`.
-
----
-
 ## Quick start (Windows)
 
 ```powershell
@@ -70,8 +56,7 @@ cd kaggle-project
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-copy .env.example .env
-# Edit .env: set GOOGLE_API_KEY=your-key
+# Create .env with GOOGLE_API_KEY=your-key
 python -m streamlit run apps\streamlit_app\app.py
 ```
 
@@ -88,8 +73,7 @@ cd kaggle-project
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env
-# Edit .env: set GOOGLE_API_KEY=your-key
+# Create .env with GOOGLE_API_KEY=your-key
 streamlit run apps/streamlit_app/app.py
 ```
 

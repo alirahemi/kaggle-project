@@ -34,53 +34,11 @@ def test_analyze_letter_raises_on_empty():
         analyze_letter("   ")
 
 
-def test_analyze_letter_demo_mode_skips_api(monkeypatch):
-    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
-    monkeypatch.setattr(
-        "agents.pipeline.get_settings",
-        lambda: type("S", (), {
-            "google_api_key": "",
-            "demo_mode": True,
-            "demo_fallback_on_quota": True,
-        })(),
-    )
-    result = analyze_letter("Jobcenter Nachforderung JC-2025-001234")
-    assert result["institution"] == "Jobcenter"
-    assert result["demo_mode"] is True
-    assert result["extraction"]["case_number"] == "JC-2025-001234"
-
-
-def test_analyze_letter_quota_fallback(monkeypatch):
-    from agents.errors import QuotaExceededError
-
-    def fake_run_sync(coro):
-        coro.close()
-        raise QuotaExceededError("429 RESOURCE_EXHAUSTED")
-
-    monkeypatch.setattr("agents.pipeline._run_coro_sync", fake_run_sync)
-    monkeypatch.setattr(
-        "agents.pipeline.get_settings",
-        lambda: type("S", (), {
-            "google_api_key": "test-key",
-            "demo_mode": False,
-            "demo_fallback_on_quota": True,
-        })(),
-    )
-    result = analyze_letter("Jobcenter test")
-    assert result["quota_fallback"] is True
-    assert result["institution"] == "Jobcenter"
-
-
 def test_analyze_letter_raises_on_missing_key(monkeypatch):
     monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
     monkeypatch.setattr(
         "agents.pipeline.get_settings",
-        lambda: type("S", (), {
-            "google_api_key": "",
-            "demo_mode": False,
-            "demo_fallback_on_quota": True,
-        })(),
+        lambda: type("S", (), {"google_api_key": ""})(),
     )
     with pytest.raises(MissingApiKeyError):
         analyze_letter("Jobcenter test letter")
-

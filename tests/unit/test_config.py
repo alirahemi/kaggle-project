@@ -1,6 +1,8 @@
 """Unit tests for application settings."""
 
-from config.settings import Settings, get_settings
+from pathlib import Path
+
+from config.settings import ENV_FILE, Settings, get_settings, reload_settings
 
 
 def test_settings_defaults():
@@ -12,6 +14,11 @@ def test_settings_defaults():
 
 
 def test_get_settings_cached():
+    reload_settings()
     a = get_settings()
     b = get_settings()
     assert a is b
+
+
+def test_env_file_path_is_project_root():
+    assert ENV_FILE == Path(__file__).resolve().parents[2] / ".env"
