@@ -1,4 +1,12 @@
-# German Bureaucracy AI Agent
+"""Normalize priority files to UTF-8 without BOM and LF line endings."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+
+README = r"""# German Bureaucracy AI Agent
 
 **Kaggle Capstone - Concierge Agents - Google ADK + Gemini 2.5 + MCP**
 
@@ -135,3 +143,77 @@ tests/fixtures/              Sample Jobcenter letter
 ## License
 
 Apache 2.0 - see [LICENSE](LICENSE)
+"""
+
+REQUIREMENTS = """google-adk>=1.35.0
+google-genai>=1.0.0
+mcp>=1.6.0
+streamlit>=1.41.0
+pypdf>=5.1.0
+python-dotenv>=1.0.1
+pydantic-settings>=2.6.0
+pyyaml>=6.0.2
+"""
+
+ENV_EXAMPLE = """# German Bureaucracy AI Agent - Environment (MVP)
+
+# Required: https://aistudio.google.com/apikey
+GOOGLE_API_KEY=your-google-api-key-here
+
+# Optional model overrides
+GEMINI_MODEL_FLASH=gemini-2.5-flash
+GEMINI_MODEL_PRO=gemini-2.5-pro
+
+# Security
+PII_REDACTION_ENABLED=true
+"""
+
+PRIORITY_FILES: list[str] = [
+    "apps/streamlit_app/app.py",
+    "agents/pipeline.py",
+    "agents/root_orchestrator.py",
+    "agents/classifier_agent.py",
+    "agents/extraction_agent.py",
+    "agents/response_writer_agent.py",
+    "agents/tools/mcp_tools.py",
+    "mcp_servers/bureaucracy_mcp/tools.py",
+]
+
+
+def write_lf(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8", newline="\n")
+
+
+def normalize_existing(path: Path) -> None:
+    raw = path.read_bytes()
+    if raw.startswith(b"\xef\xbb\xbf"):
+        raw = raw[3:]
+    for enc in ("utf-8", "utf-8-sig", "utf-16", "utf-16-le", "utf-16-be"):
+        try:
+            text = raw.decode(enc)
+            break
+        except UnicodeDecodeError:
+            continue
+    else:
+        text = raw.decode("utf-8", errors="replace")
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    write_lf(path, text)
+
+
+def main() -> None:
+    write_lf(ROOT / "README.md", README)
+    write_lf(ROOT / "requirements.txt", REQUIREMENTS)
+    write_lf(ROOT / ".env.example", ENV_EXAMPLE)
+
+    for rel in PRIORITY_FILES:
+        p = ROOT / rel
+        if p.exists():
+            normalize_existing(p)
+            print(f"normalized: {rel}")
+
+    print("done")
+
+
+if __name__ == "__main__":
+    main()
