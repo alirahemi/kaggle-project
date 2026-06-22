@@ -17,5 +17,9 @@ class GeminiApiError(BureaucracyAgentError):
     """Raised when the Gemini API call fails."""
 
 
+class QuotaExceededError(GeminiApiError):
+    """Raised when Gemini returns 429 / RESOURCE_EXHAUSTED."""
+
+
 class PipelineError(BureaucracyAgentError):
     """Raised for unexpected pipeline failures."""

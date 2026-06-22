@@ -8,6 +8,14 @@ A multi-agent concierge that helps immigrants in Germany understand official let
 
 ---
 
+## Streamlit UI (single-page MVP)
+
+The demo runs as **one Streamlit page** (`apps/streamlit_app/app.py`). It calls `agents.analyze_letter()` directly — no API gateway or API token required. Only `GOOGLE_API_KEY` in `.env` is needed.
+
+Legacy multipage routes (`pages/`) have been removed for the Kaggle MVP.
+
+---
+
 ## For judges (60-second overview)
 
 | Requirement | How this project demonstrates it |
@@ -38,6 +46,20 @@ flowchart TB
     PIPE --> LOG[Audit log hash only]
     R --> OUT[Summary + Checklist + Reply]
 ```
+
+---
+
+## Demo mode (Kaggle recording)
+
+Gemini free tier allows only a few requests per minute. For reliable screen recording:
+
+```env
+DEMO_MODE=true
+```
+
+This skips live Gemini/ADK calls and returns a static analysis of the sample Jobcenter letter. The real pipeline in `agents/pipeline.py` is unchanged — set `DEMO_MODE=false` to use it.
+
+If a live run hits **429 RESOURCE_EXHAUSTED**, the app shows a friendly quota message and (by default) the same static fallback when `DEMO_FALLBACK_ON_QUOTA=true`.
 
 ---
 
@@ -116,7 +138,7 @@ python -m mcp_servers.bureaucracy_mcp.server
 
 ```
 agents/                      ADK orchestrator + 3 agents + pipeline
-apps/streamlit_app/          Demo UI
+apps/streamlit_app/app.py   Single-page demo UI (no API gateway)
 mcp_servers/bureaucracy_mcp/ MCP tools
 knowledge/glossary/          Curated terms
 tests/fixtures/              Sample Jobcenter letter

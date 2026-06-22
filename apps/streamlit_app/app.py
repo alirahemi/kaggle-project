@@ -15,6 +15,7 @@ from agents.errors import (
     GeminiApiError,
     MissingApiKeyError,
     PipelineError,
+    QuotaExceededError,
 )
 from agents.pipeline import analyze_letter
 from agents.security import get_disclaimer
@@ -76,6 +77,15 @@ def _show_error(exc: Exception) -> None:
         st.info("Copy `.env.example` to `.env` and set `GOOGLE_API_KEY`.")
     elif isinstance(exc, EmptyInputError):
         st.warning(str(exc))
+    elif isinstance(exc, QuotaExceededError):
+        st.error(
+            "Gemini free-tier quota exceeded (429 RESOURCE_EXHAUSTED). "
+            "The API allows only a few requests per minute."
+        )
+        st.info(
+            "Wait about a minute and try again, or set `DEMO_MODE=true` in `.env` "
+            "for a reliable Kaggle recording without live API calls."
+        )
     elif isinstance(exc, GeminiApiError):
         st.error(str(exc))
         st.info("Check your key at https://aistudio.google.com/apikey")
@@ -127,6 +137,16 @@ def _render_checklist(items: list) -> None:
 
 
 def _render_results(result: dict) -> None:
+    if result.get("demo_mode"):
+        st.info(
+            "Demo mode (`DEMO_MODE=true`): static sample output — Gemini/ADK pipeline was not called."
+        )
+    elif result.get("quota_fallback"):
+        st.warning(
+            "Live Gemini analysis failed due to free-tier quota limits. "
+            "Showing the pre-recorded Jobcenter sample output instead."
+        )
+
     institution = result.get("institution", "Other")
     icon = INSTITUTION_ICONS.get(institution, "📄")
 
@@ -194,12 +214,19 @@ def _render_results(result: dict) -> None:
         st.info("No reply draft was generated.")
 
     with st.expander("Technical details (for judges)"):
-        st.markdown(
-            "- **Orchestrator:** Google ADK `SequentialAgent`\n"
-            "- **Agents:** classifier → extraction → response_writer\n"
-            "- **Models:** Gemini 2.5 Flash + Pro\n"
-            "- **MCP tools:** `glossary_lookup`, `deadline_calculator`"
-        )
+        if result.get("demo_mode") or result.get("quota_fallback"):
+            st.markdown(
+                "- **Demo mode uses a static fallback** because free-tier Gemini quota is limited.\n"
+                "- The live ADK + Gemini + MCP pipeline remains in `agents/pipeline.py` "
+                "and runs when `DEMO_MODE=false` and quota is available."
+            )
+        else:
+            st.markdown(
+                "- **Orchestrator:** Google ADK `SequentialAgent`\n"
+                "- **Agents:** classifier → extraction → response_writer\n"
+                "- **Models:** Gemini 2.5 Flash + Pro\n"
+                "- **MCP tools:** `glossary_lookup`, `deadline_calculator`"
+            )
         if extraction:
             st.json(extraction)
 
@@ -228,10 +255,15 @@ def main() -> None:
 
         st.divider()
         st.header("Configuration")
-        if _api_key_configured():
+        if settings.demo_mode:
+            st.warning("DEMO_MODE=true — static sample output, no Gemini calls")
+        elif _api_key_configured():
             st.success("API key configured")
         else:
             st.error("Set GOOGLE_API_KEY in `.env`")
+
+        if settings.demo_fallback_on_quota and not settings.demo_mode:
+            st.caption("Quota fallback enabled (`DEMO_FALLBACK_ON_QUOTA=true`)")
 
         st.markdown(
             "**Agent pipeline**\n"
@@ -268,7 +300,7 @@ def main() -> None:
     letter_text = uploaded_text.strip() if uploaded_text.strip() else pasted_text.strip()
 
     if st.button("Analyze letter", type="primary", use_container_width=True):
-        if not _api_key_configured():
+        if not settings.demo_mode and not _api_key_configured():
             _show_error(
                 MissingApiKeyError(
                     "GOOGLE_API_KEY is not set. Copy .env.example to .env and add your key."
@@ -279,7 +311,12 @@ def main() -> None:
             _show_error(EmptyInputError("Paste or upload a letter first."))
             return
 
-        with st.spinner("Analyzing… (classify → extract → respond)"):
+        spinner_msg = (
+            "Loading demo analysis…"
+            if settings.demo_mode
+            else "Analyzing… (classify → extract → respond)"
+        )
+        with st.spinner(spinner_msg):
             try:
                 st.session_state.result = analyze_letter(letter_text)
             except BureaucracyAgentError as exc:

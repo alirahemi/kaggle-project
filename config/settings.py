@@ -51,6 +51,8 @@ class Settings(BaseSettings):
     max_pdf_pages: int = 20
     document_retention_days: int = 30
     pii_redaction_enabled: bool = True
+    demo_mode: bool = False
+    demo_fallback_on_quota: bool = True
 
     agent_default_locale: str = "en"
     agent_default_bundesland: str = "BE"

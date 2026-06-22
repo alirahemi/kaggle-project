@@ -15,11 +15,13 @@ from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
 
+from agents.demo_fallback import build_demo_analysis
 from agents.errors import (
     EmptyInputError,
     GeminiApiError,
     MissingApiKeyError,
     PipelineError,
+    QuotaExceededError,
 )
 from agents.root_orchestrator import create_orchestrator
 from agents.security import get_disclaimer, hash_text, log_analysis_safe, redact_pii
@@ -204,6 +206,14 @@ def _extract_agent_outputs(
     return result
 
 
+def _is_quota_error(exc: BaseException) -> bool:
+    message = str(exc).lower()
+    return any(
+        hint in message
+        for hint in ("429", "resource exhausted", "quota", "rate limit")
+    )
+
+
 def _is_gemini_error(exc: BaseException) -> bool:
     message = str(exc).lower()
     return any(hint in message for hint in _GEMINI_ERROR_HINTS)
@@ -265,6 +275,11 @@ async def _run_pipeline_async(letter_text: str, settings: Settings) -> dict[str,
                         events_text.append(part.text)
     except Exception as exc:
         logger.exception("ADK pipeline failed")
+        if _is_quota_error(exc):
+            raise QuotaExceededError(
+                "Gemini free-tier quota exceeded (429 RESOURCE_EXHAUSTED). "
+                "Wait a minute and try again, or enable DEMO_MODE=true for recording."
+            ) from exc
         if _is_gemini_error(exc):
             raise GeminiApiError(
                 f"Gemini API error: {exc}. Check your API key, quota, and network."
@@ -327,4 +342,17 @@ def analyze_letter(letter_text: str, settings: Settings | None = None) -> dict[s
     if not letter_text or not letter_text.strip():
         raise EmptyInputError("Please paste or upload a letter before analyzing.")
     cfg = settings or get_settings()
-    return _run_coro_sync(_run_pipeline_async(letter_text, cfg))
+
+    if cfg.demo_mode:
+        return build_demo_analysis(letter_text, reason="demo_mode")
+
+    try:
+        return _run_coro_sync(_run_pipeline_async(letter_text, cfg))
+    except QuotaExceededError:
+        if cfg.demo_fallback_on_quota:
+            return build_demo_analysis(letter_text, reason="quota_exceeded")
+        raise
+    except GeminiApiError as exc:
+        if cfg.demo_fallback_on_quota and _is_quota_error(exc):
+            return build_demo_analysis(letter_text, reason="quota_exceeded")
+        raise
